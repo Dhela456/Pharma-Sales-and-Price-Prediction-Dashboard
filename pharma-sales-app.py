@@ -189,4 +189,4 @@ if submit_button:
         results[col] = results[col].astype(int)
     results = results.astype(str).replace('\.0', '', regex=True)
     st.subheader("Prediction Results")
-    st.table(results, use_container_width=True, index=False)
+    st.table(results)
