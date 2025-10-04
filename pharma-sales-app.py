@@ -53,7 +53,7 @@ st.set_page_config(page_title="Pharma_Sales_App", layout='wide', initial_sidebar
 @st.cache_data
 # Load Data
 def load_data():
-    return pd.read_csv('C:/Users/IreOluwa/Documents/projects/Pharma-Data/Data/cleaned_pharma_data.csv')
+    return pd.read_csv('Data/cleaned_pharma_data.csv')
 data = load_data()
 df = pd.DataFrame(data)
 
