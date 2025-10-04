@@ -50,6 +50,7 @@ st.set_page_config(page_title="Pharma_Sales_App", layout='wide', initial_sidebar
     'About': 'This web application is designed for the prediction of Pharmaceutical Sales!'
     })
 
+@st.cache_data
 # Load Data
 def load_data():
     return pd.read_csv('C:/Users/IreOluwa/Documents/projects/Pharma-Data/Data/cleaned_pharma_data.csv')
@@ -67,6 +68,49 @@ model_price = pipeline['model_price']
 categorical_columns = pipeline['categorical_columns']
 numeric_columns = pipeline['numeric_columns']
 
+# Prediction Functions
+def predict_new_data(new_data, model_sales, model_price, label_encoders, scaler, features_for_sales,
+                     features_for_price, categorical_columns, numeric_columns):
+    new_data_df = pd.DataFrame(new_data)
+    # Encode categorical columns
+    for col in categorical_columns:
+        if col in new_data_df.columns:
+            le = label_encoders[col]
+            # Add 'Unknown' to classes if needed
+            if 'Unknown' not in le.classes_:
+                le.classes_ = np.append(le.classes_, 'Unknown')
+            new_data_df[col] = new_data_df[col].apply(lambda x: x if x in le.classes_ else 'Unknown')
+            new_data_df[col] = le.transform(new_data_df[col])
+    
+    # Scale numeric features
+    input_data_as_array = np.asarray(new_data_df[numeric_columns])
+    std_data = scaler.inverse_transform(input_data_as_array.reshape(1, -1)).flatten()
+    new_data_df[numeric_columns] = std_data
+
+    # Select only the columns used for training, in the correct order
+    X_sales_pred = new_data_df.reindex(columns=features_for_sales, fill_value=0)
+    X_price_pred = new_data_df.reindex(columns=features_for_price, fill_value=0)
+    # Predict sales and price
+    price_prediction = model_price.predict(X_price_pred)
+    sales_prediction = price_prediction * new_data_df['Quantity']
+
+    return sales_prediction, price_prediction
+
+# City to country mapping
+city_to_country = {}
+for city in label_encoders['City'].classes_:
+    countries = df[df['City'].str.strip() == city]['Country'].str.strip().unique()
+    city_to_country[city] = sorted(countries)[0] if len(countries) > 0 else 'Unknown'
+    if len(countries) > 1:
+        st.warning(f"City '{city}' maps to multiple countries: {countries}. Using '{city_to_country[city]}'.")
+# Product Name to Product Class mapping
+product_to_class = {}
+for product in label_encoders['Product Name'].classes_:
+    classes = df[df['Product Name'].str.strip() == product]['Product Class'].str.strip().unique()
+    product_to_class[product] = sorted(classes)[0] if len(classes) > 0 else 'Unknown'
+    if len(classes) > 1:
+        st.warning(f"Product '{product}' maps to multiple classes: {classes}. Using '{product_to_class[product]}'.")
+
 # Streamlit App
 st.markdown('<style>div.block-container{padding-top: 2rem;}</style>', unsafe_allow_html=True)
 #st.title("Pharma Sales and Price Prediction :red[App]")
@@ -82,12 +126,16 @@ with st.form(key='prediction_form'):
         distributor = st.selectbox("Distributor", options=label_encoders['Distributor'].classes_)
         customer_name = st.selectbox("Customer Name", options=label_encoders['Customer Name'].classes_)
         city = st.selectbox("City", options=label_encoders['City'].classes_)
-        country = st.selectbox('Country', options=label_encoders['Country'].classes_)
+        country = st.selectbox("Country", options=label_encoders['Country'].classes_, 
+                           index=label_encoders['Country'].classes_.tolist().index(city_to_country[city])
+                           if city_to_country[city] in label_encoders['Country'].classes_ else 0)
     with col2:
         channel = st.selectbox('Channel', options=label_encoders['Channel'].classes_)
         sub_channel = st.selectbox('Sub-channel', options=label_encoders['Sub-channel'].classes_)
         product_name = st.selectbox('Product Name', options=label_encoders['Product Name'].classes_)
-        product_class = st.selectbox('Product Class', options=label_encoders['Product Class'].classes_)
+        product_class = st.selectbox("Product Class", options=label_encoders['Product Class'].classes_,
+                                 index=label_encoders['Product Class'].classes_.tolist().index(product_to_class[product_name])
+                                 if product_to_class[product_name] in label_encoders['Product Class'].classes_ else 0)
     with col3:
         month = st.selectbox('Month', options=label_encoders['Month'].classes_)
         name_of_sales_rep = st.selectbox('Name of Sales Rep', options=label_encoders['Name of Sales Rep'].classes_)
@@ -106,7 +154,7 @@ with st.form(key='prediction_form'):
 
 # Process form submission
 if submit_button:
-    new_data_df= pd.DataFrame({
+    new_data_df= {
         'Distributor': [distributor],
         'Customer Name': [customer_name],
         'City': [city],
@@ -123,41 +171,22 @@ if submit_button:
         'Sales Team': [sales_team]
        # 'Quantity_Price': quantity * price_prediction
 #        'Price': [price]  
-    })
+    }
     if actual_Price > 0:
         new_data_df['Sales'] = [actual_Price]
     if actual_sales > 0:
         new_data_df['Price'] = [actual_sales]
 
 # Predictions
-    for col in categorical_columns:
-        if col in new_data_df.columns:
-            le = label_encoders[col]
-            # Add 'Unknown' to classes if needed
-            if 'Unknown' not in le.classes_:
-                le.classes_ = np.append(le.classes_, 'Unknown')
-            new_data_df[col] = new_data_df[col].apply(lambda x: x if x in le.classes_ else 'Unknown')
-            new_data_df[col] = le.transform(new_data_df[col])
-    # Scale numeric features
-    input_data_as_array = np.asarray(new_data_df[numeric_columns])
-    std_data = scaler.inverse_transform(input_data_as_array.reshape(1, -1)).flatten()
-    new_data_df[numeric_columns] = std_data
-
-    # Select only the columns used for training, in the correct order
-    X_sales_pred = new_data_df.reindex(columns=features_for_sales, fill_value=0)
-    X_price_pred = new_data_df.reindex(columns=features_for_price, fill_value=0)
-
-#    sales_prediction = model_sales.predict(X_sales_pred)
-    price_prediction = model_price.predict(X_price_pred)
-    sales_prediction = price_prediction * quantity
-
+    sales_prediction, price_prediction = predict_new_data(new_data_df, model_sales, model_price, label_encoders, scaler, features_for_sales, features_for_price, categorical_columns, numeric_columns)
     results = pd.DataFrame({
         'Predicted Sales ($)': sales_prediction.round(2),
-        #'Actual Sales ($)': new_data_df['Sales'],
+    #  'Actual Sales ($)': new_data_df['Sales'],
         'Predicted Price ($)': price_prediction.round(2),
-        #'Actual Price ($)': new_data_df['Price']
+    #  'Actual Price ($)': new_data_df['Price']
     })
-    st.write("Predictions for New Data:")
     for col in results.columns:
         results[col] = results[col].astype(int)
-    results
+    results = results.astype(str).replace('\.0', '', regex=True)
+    st.subheader("Prediction Results")
+    st.table(results)
