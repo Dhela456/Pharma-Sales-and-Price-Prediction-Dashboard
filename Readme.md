@@ -92,23 +92,23 @@ The evaluations metrics for both models are summarized below:
 - r2_sales = 1.00
 - Cross-validation for price model:
 cv_price =     train-rmse-mean  train-rmse-std  test-rmse-mean  test-rmse-std
-95         0.000352        0.000099        0.000352       0.000100
-96         0.000320        0.000099        0.000320       0.000100
-97         0.000285        0.000086        0.000286       0.000087
-98         0.000260        0.000078        0.000261       0.000078
-99         0.000239        0.000076        0.000239       0.000077
+95         0.000369        0.000033        0.000370       0.000034
+96         0.000320        0.000032        0.000321       0.000033
+97         0.000287        0.000038        0.000288       0.000038
+98         0.000253        0.000033        0.000254       0.000034
+99         0.000224        0.000031        0.000224       0.000031
 - **Sales Model**:
-- mse_sales = 9486.45   
-- rmse_sales = 97.40 
-- mae_sales = 46.58
+- mse_sales = 2043.93   
+- rmse_sales = 45.21 
+- mae_sales = 25.22
 - r2_sales = 1.00
 - Cross-validation for sales model:
 cv_sales =     train-rmse-mean  train-rmse-std  test-rmse-mean  test-rmse-std
-95        99.073010        0.598024      101.209234       1.627515
-96        98.868545        0.598998      101.036722       1.588280
-97        98.770108        0.601522      100.946309       1.546351
-98        98.549451        0.633928      100.761270       1.536726
-99        98.236630        0.645569      100.526271       1.509237
+95        44.877134        0.374661       45.355562       0.671234
+96        44.804413        0.371526       45.297886       0.679655
+97        44.706390        0.367365       45.217835       0.652994
+98        44.641754        0.357784       45.158231       0.662179
+99        44.547209        0.363259       45.076324       0.651043
 
 ## Feature Importance
 Feature importance was analyzed for both models to understand which features had the most impact on predictions.
