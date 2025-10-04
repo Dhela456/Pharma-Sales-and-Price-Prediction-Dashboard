@@ -68,6 +68,21 @@ model_price = pipeline['model_price']
 categorical_columns = pipeline['categorical_columns']
 numeric_columns = pipeline['numeric_columns']
 
+# City to country mapping
+city_to_country = {}
+for city in label_encoders['City'].classes_:
+    countries = df[df['City'].str.strip() == city]['Country'].str.strip().unique()
+    city_to_country[city] = sorted(countries)[0] if len(countries) > 0 else 'Unknown'
+    if len(countries) > 1:
+        st.warning(f"City '{city}' maps to multiple countries: {countries}. Using '{city_to_country[city]}'.")
+# Product Name to Product Class mapping
+product_to_class = {}
+for product in label_encoders['Product Name'].classes_:
+    classes = df[df['Product Name'].str.strip() == product]['Product Class'].str.strip().unique()
+    product_to_class[product] = sorted(classes)[0] if len(classes) > 0 else 'Unknown'
+    if len(classes) > 1:
+        st.warning(f"Product '{product}' maps to multiple classes: {classes}. Using '{product_to_class[product]}'.")
+
 # Prediction Functions
 def predict_new_data(new_data, model_sales, model_price, label_encoders, scaler, features_for_sales,
                      features_for_price, categorical_columns, numeric_columns):
@@ -95,21 +110,6 @@ def predict_new_data(new_data, model_sales, model_price, label_encoders, scaler,
     sales_prediction = price_prediction * new_data_df['Quantity']
 
     return sales_prediction, price_prediction
-
-# City to country mapping
-city_to_country = {}
-for city in label_encoders['City'].classes_:
-    countries = df[df['City'].str.strip() == city]['Country'].str.strip().unique()
-    city_to_country[city] = sorted(countries)[0] if len(countries) > 0 else 'Unknown'
-    if len(countries) > 1:
-        st.warning(f"City '{city}' maps to multiple countries: {countries}. Using '{city_to_country[city]}'.")
-# Product Name to Product Class mapping
-product_to_class = {}
-for product in label_encoders['Product Name'].classes_:
-    classes = df[df['Product Name'].str.strip() == product]['Product Class'].str.strip().unique()
-    product_to_class[product] = sorted(classes)[0] if len(classes) > 0 else 'Unknown'
-    if len(classes) > 1:
-        st.warning(f"Product '{product}' maps to multiple classes: {classes}. Using '{product_to_class[product]}'.")
 
 # Streamlit App
 st.markdown('<style>div.block-container{padding-top: 2rem;}</style>', unsafe_allow_html=True)
@@ -189,4 +189,4 @@ if submit_button:
         results[col] = results[col].astype(int)
     results = results.astype(str).replace('\.0', '', regex=True)
     st.subheader("Prediction Results")
-    st.table(results)
+    st.table(results, use_container_width=True, index=False)
