@@ -17,9 +17,12 @@
 - [Conclusion](#conclusion)
 
 ## Data Overview
-    The dataset contains sales records from a pharmaceutical company, including details about products, distributors, sales representatives, sales and price figures.
+The dataset contains sales records from a pharmaceutical company, including details about products, distributors, sales representatives, sales and price figures.
 The original dataset has 254,083 rows and 18 columns. After cleaning, it has 218,928 and 18 columns. The cleaned dataset is further used for analysis, modeling, and 
 also used in the creation of a dashboard report PowerBI.
+A web App was also created using Streamlit to show predictions and also make predictions. The link to the app:
+https://pharma-sales-app.streamlit.app/
+
 The cleaned dataset is saved as 'cleaned_pharma_data.csv', and the original dataset is 'pharma-data.csv'. 
 **Columns**:
 - Distributor
